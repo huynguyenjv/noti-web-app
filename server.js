@@ -1,7 +1,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
-const { sendMessage } = require('./lib/sender');
+const { buildMessage, getMessaging } = require('./lib/sender');
 
 const app = express();
 app.use(express.json());
@@ -26,13 +26,11 @@ app.post('/api/send', async (req, res) => {
   try {
     // Validation happens inside sendMessage -> buildMessage; do it explicitly
     // so validation errors map to 400 and send errors map to 500.
-    const { buildMessage } = require('./lib/sender');
     message = buildMessage({ target, notification, data });
   } catch (err) {
     return res.status(400).json({ ok: false, error: err.message });
   }
   try {
-    const { getMessaging } = require('./lib/sender');
     const messageId = await getMessaging().send(message);
     return res.json({ ok: true, messageId });
   } catch (err) {
