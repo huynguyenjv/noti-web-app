@@ -47,6 +47,18 @@ document.getElementById('enableBtn').addEventListener('click', async () => {
       return;
     }
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    // getToken -> PushManager.subscribe cần service worker đã ACTIVE.
+    // register() resolve trước khi SW activate, nên phải đợi tới khi active.
+    await navigator.serviceWorker.ready;
+    if (!registration.active) {
+      await new Promise((resolve) => {
+        const sw = registration.installing || registration.waiting;
+        if (!sw) return resolve();
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'activated') resolve();
+        });
+      });
+    }
     const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
     if (token) {
       logEl.textContent = token;
