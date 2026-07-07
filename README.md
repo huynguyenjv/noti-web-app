@@ -23,6 +23,8 @@ npm start
 ```
 Mở http://localhost:3000
 
+chrome://gcm-internals/
+
 ## Cách test
 1. Bấm **Bật nhận thông báo**, cho phép quyền → token hiện ra, bấm **Copy token**.
 2. Dán token vào ô **Target value**, nhập tiêu đề + nội dung, bấm **Gửi notification**.

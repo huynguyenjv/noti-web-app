@@ -9,15 +9,52 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 
-app.get('/api/config', (req, res) => {
-  res.json({
+function fcmConfig() {
+  return {
     apiKey: process.env.FIREBASE_API_KEY || '',
     authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
     projectId: process.env.FIREBASE_PROJECT_ID || '',
     messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
     appId: process.env.FIREBASE_APP_ID || '',
     vapidKey: process.env.FIREBASE_VAPID_KEY || '',
-  });
+  };
+}
+
+app.get('/api/config', (req, res) => {
+  res.json(fcmConfig());
+});
+
+// Serve the FCM service worker with config injected so firebase.messaging()
+// initializes SYNCHRONOUSLY at worker startup. A SW that fetched /api/config
+// asynchronously could receive a push before its handler was registered and
+// silently drop it.
+app.get('/firebase-messaging-sw.js', (req, res) => {
+  const cfg = fcmConfig();
+  const appConfig = {
+    apiKey: cfg.apiKey,
+    authDomain: cfg.authDomain,
+    projectId: cfg.projectId,
+    messagingSenderId: cfg.messagingSenderId,
+    appId: cfg.appId,
+  };
+  res.type('application/javascript');
+  res.set('Service-Worker-Allowed', '/');
+  res.send(`importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+
+firebase.initializeApp(${JSON.stringify(appConfig)});
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage((payload) => {
+  const n = payload.notification || {};
+  const d = payload.data || {};
+  const title = n.title || d.title || 'Notification';
+  const body = n.body || d.body || '';
+  self.registration.showNotification(title, { body });
+});
+`);
 });
 
 app.post('/api/send', async (req, res) => {

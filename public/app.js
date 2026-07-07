@@ -33,8 +33,17 @@ async function init() {
     appId: cfg.appId,
   });
   messaging = getMessaging(app);
-  onMessage(messaging, (payload) => {
+  onMessage(messaging, async (payload) => {
+    const n = payload.notification || payload.data || {};
     log('📩 Foreground message:', payload.notification || payload.data || payload);
+    // Foreground messages do NOT auto-display; show a popup ourselves so the
+    // notification appears whether the tab is focused or not.
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(n.title || 'Notification', { body: n.body || '' });
+    } catch (err) {
+      log('Không hiển thị được popup foreground:', err.message);
+    }
   });
   log('Firebase đã khởi tạo. Bấm "Bật nhận thông báo".');
 }
