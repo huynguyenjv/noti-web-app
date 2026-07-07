@@ -1,6 +1,7 @@
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
+const { sendMessage } = require('./lib/sender');
 
 const app = express();
 app.use(express.json());
@@ -17,6 +18,26 @@ app.get('/api/config', (req, res) => {
     appId: process.env.FIREBASE_APP_ID || '',
     vapidKey: process.env.FIREBASE_VAPID_KEY || '',
   });
+});
+
+app.post('/api/send', async (req, res) => {
+  const { target, notification, data } = req.body || {};
+  let message;
+  try {
+    // Validation happens inside sendMessage -> buildMessage; do it explicitly
+    // so validation errors map to 400 and send errors map to 500.
+    const { buildMessage } = require('./lib/sender');
+    message = buildMessage({ target, notification, data });
+  } catch (err) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+  try {
+    const { getMessaging } = require('./lib/sender');
+    const messageId = await getMessaging().send(message);
+    return res.json({ ok: true, messageId });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 if (require.main === module) {
