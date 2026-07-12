@@ -71,13 +71,45 @@ document.getElementById('enableBtn').addEventListener('click', async () => {
     const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
     if (token) {
       logEl.textContent = token;
+      logEl.classList.add('has-token');
       log('✅ Lấy token thành công.');
+      // Auto-register with the notification service so a PUSH to this userId reaches this browser.
+      await registerDevice(token);
     } else {
       log('Không lấy được token.');
     }
   } catch (err) {
     log('Lỗi getToken:', err.message);
   }
+});
+
+async function registerDevice(token) {
+  const userId = document.getElementById('userId').value.trim();
+  if (!userId) {
+    log('⚠️ Chưa nhập User ID — bỏ qua đăng ký device.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/register-device', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ userId, token, platform: 'WEB' }),
+    });
+    const json = await res.json();
+    if (json.ok) log(`✅ Đã đăng ký device cho user "${userId}" với notification service.`);
+    else log('❌ Đăng ký device lỗi:', json.error);
+  } catch (err) {
+    log('❌ Lỗi mạng khi đăng ký device:', err.message);
+  }
+}
+
+document.getElementById('registerBtn').addEventListener('click', () => {
+  const token = logEl.textContent;
+  if (!token || token === 'chưa có token') {
+    log('Chưa có token — bấm "Bật nhận thông báo" trước.');
+    return;
+  }
+  registerDevice(token);
 });
 
 document.getElementById('copyBtn').addEventListener('click', async () => {
