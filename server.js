@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const { buildMessage, getMessaging } = require('./lib/sender');
 const { buildDeviceRegistration } = require('./lib/register');
+const { buildNotificationRequest } = require('./lib/notify');
 
 const app = express();
 app.use(express.json());
@@ -94,6 +95,126 @@ app.post('/api/register-device', async (req, res) => {
       .json({ ok: false, error: `notification service responded ${r.status}: ${text}` });
   } catch (err) {
     return res.status(502).json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// Send THROUGH the notification service (ingest API). Unlike /api/send (which pushes to one token
+// via firebase-admin directly), this goes recipientId -> ContactResolver -> device_token fan-out.
+app.post('/api/notify', async (req, res) => {
+  let body;
+  try {
+    body = buildNotificationRequest(req.body || {});
+  } catch (err) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+  try {
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/notification`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const text = await r.text();
+    if (r.status === 202 || r.status === 200) {
+      return res.json({ ok: true, status: r.status, eventRef: body.eventRef, response: text });
+    }
+    return res
+      .status(502)
+      .json({ ok: false, error: `notification service responded ${r.status}: ${text}` });
+  } catch (err) {
+    return res
+      .status(502)
+      .json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// Read the INAPP inbox for a user (proxy to the notification service).
+app.get('/api/inbox', async (req, res) => {
+  const userId = (req.query.userId || '').trim();
+  if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+  try {
+    const url = `${NOTIFICATION_BASE_URL}/api/v1/inbox?userId=${encodeURIComponent(
+      userId
+    )}&unreadOnly=false&limit=20`;
+    const r = await fetch(url);
+    const text = await r.text();
+    if (!r.ok) {
+      return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+    }
+    let parsed = null;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = null;
+    }
+    const data = parsed && parsed.data ? parsed.data : parsed || {};
+    return res.json({ ok: true, items: data.items || [], unreadCount: data.unreadCount || 0 });
+  } catch (err) {
+    return res
+      .status(502)
+      .json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// Realtime SSE stream (out-app presence). Proxy the service's /api/v1/stream so the browser can
+// open an EventSource here (same origin) — opening it marks the user "online" so OUTAPP nudges are
+// delivered over this stream instead of push.
+app.get('/api/stream', async (req, res) => {
+  const userId = (req.query.userId || '').trim();
+  if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const controller = new AbortController();
+  req.on('close', () => controller.abort());
+
+  try {
+    const upstream = await fetch(
+      `${NOTIFICATION_BASE_URL}/api/v1/stream?userId=${encodeURIComponent(userId)}`,
+      { headers: { Accept: 'text/event-stream' }, signal: controller.signal }
+    );
+    if (!upstream.ok || !upstream.body) {
+      res.write(`event: error\ndata: upstream ${upstream.status}\n\n`);
+      return res.end();
+    }
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(decoder.decode(value, { stream: true }));
+    }
+    res.end();
+  } catch (err) {
+    if (!controller.signal.aborted) {
+      try {
+        res.write(`event: error\ndata: ${err.message}\n\n`);
+      } catch {
+        /* client gone */
+      }
+    }
+    res.end();
+  }
+});
+
+// Mark one inbox item read (proxy to the notification service).
+app.post('/api/inbox/:id/read', async (req, res) => {
+  const userId = ((req.body && req.body.userId) || '').trim();
+  if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+  try {
+    const url = `${NOTIFICATION_BASE_URL}/api/v1/inbox/${encodeURIComponent(
+      req.params.id
+    )}/read?userId=${encodeURIComponent(userId)}&kind=INBOX`;
+    const r = await fetch(url, { method: 'POST' });
+    if (r.status === 204 || r.ok) return res.json({ ok: true });
+    const text = await r.text();
+    return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+  } catch (err) {
+    return res
+      .status(502)
+      .json({ ok: false, error: `cannot reach notification service: ${err.message}` });
   }
 });
 

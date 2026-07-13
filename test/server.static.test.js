@@ -15,5 +15,5 @@ test('GET / serves the index page', async () => {
   const body = await res.text();
   server.close();
   assert.strictEqual(res.status, 200);
-  assert.match(body, /FCM Notification Tester/);
+  assert.match(body, /Notification Tester/);
 });

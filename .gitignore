@@ -1,6 +1,8 @@
 node_modules/
 .env
 *.log
+# Machine-specific CA bundle (exported from local root store; regenerate via npm run gen-certs)
+certs/
 serviceAccount*.json
 # Firebase service account keys (never commit private keys)
 *-firebase-adminsdk-*.json

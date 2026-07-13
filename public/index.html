@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FCM Notification Tester</title>
+  <title>Notification Tester</title>
   <style>
     :root {
       --bg-canvas: #0b0f19;
@@ -35,212 +35,160 @@
       color: var(--text-primary);
       max-width: 760px;
       margin: 0 auto;
-      padding: 2.5rem 1.25rem 4rem;
+      padding: 2rem 1.25rem 4rem;
       line-height: 1.5;
     }
 
     .page-head {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      margin-bottom: 2rem;
-      padding-bottom: 1.25rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.1rem;
       border-bottom: 1px solid var(--border-soft);
     }
+    .page-head h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.3rem; }
+    .page-head p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
 
-    .page-head h1 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      margin: 0 0 0.35rem;
-    }
+    .head-actions { display: flex; align-items: center; gap: 0.6rem; }
 
-    .page-head p {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 0.88rem;
+    /* Realtime toggle */
+    .rt-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem; background: var(--bg-panel);
+      border: 1px solid var(--border); color: var(--text-muted); border-radius: 999px;
+      padding: 0.4rem 0.8rem; font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: border-color 0.15s, color 0.15s;
     }
+    .rt-btn:hover { border-color: var(--accent); }
+    .rt-btn.active { color: var(--text-primary); border-color: var(--accent-2); }
+    .rt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+    .rt-dot.connecting { background: #f5c451; animation: pulse 1s infinite; }
+    .rt-dot.on { background: var(--accent-2); box-shadow: 0 0 0 3px var(--accent-2-soft); }
+    @keyframes pulse { 50% { opacity: 0.35; } }
 
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.03em;
-      color: var(--text-muted);
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      padding: 0.35rem 0.65rem;
-      border-radius: 999px;
-      white-space: nowrap;
+    /* Bell */
+    .bell { position: relative; }
+    .bell-btn {
+      background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-primary);
+      width: 42px; height: 42px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
     }
+    .bell-btn:hover { border-color: var(--accent); }
+    .bell-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px;
+      background: var(--danger); color: #fff; border-radius: 9px; font-size: 0.68rem; font-weight: 700;
+      display: none; align-items: center; justify-content: center; font-family: var(--mono);
+    }
+    .bell-badge.show { display: flex; }
+    .bell-panel {
+      position: absolute; top: 52px; right: 0; width: min(360px, 90vw); max-height: 420px; overflow: auto;
+      background: var(--bg-panel-raised); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); padding: 0.75rem; z-index: 20; display: none;
+    }
+    .bell-panel.open { display: block; }
+    .bell-panel-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;
+    }
+    .bell-panel-head h3 { margin: 0; font-size: 0.9rem; }
 
-    .status-pill .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-faint);
-      transition: background 0.2s ease, box-shadow 0.2s ease;
-    }
+    /* User bar */
+    .userbar { margin-bottom: 1.1rem; }
 
-    .status-pill.is-live .dot {
-      background: var(--accent-2);
-      box-shadow: 0 0 0 3px var(--accent-2-soft);
+    /* Tabs */
+    .tabs { display: flex; gap: 0.35rem; margin-bottom: 1.1rem; border-bottom: 1px solid var(--border-soft); }
+    .tab {
+      background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted);
+      padding: 0.6rem 0.9rem; font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; margin-bottom: -1px;
     }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     section {
-      position: relative;
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.4rem 1.4rem 1.5rem;
-      margin-bottom: 1.25rem;
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.3rem 1.4rem 1.5rem; margin-bottom: 1.1rem;
     }
 
-    .step-head {
-      display: flex;
-      align-items: baseline;
-      gap: 0.6rem;
-      margin-bottom: 1rem;
-    }
-
-    .step-num {
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      color: var(--accent);
-      background: var(--accent-soft);
-      border-radius: 5px;
-      padding: 0.15rem 0.45rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .step-head h2 {
-      font-size: 0.98rem;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .step-head span.hint {
-      margin-left: auto;
-      font-size: 0.76rem;
-      color: var(--text-faint);
-      font-family: var(--mono);
+    .note { margin: 0 0 0.9rem; color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+    .note b { color: var(--text-primary); font-weight: 600; }
+    code {
+      font-family: var(--mono); font-size: 0.9em; background: var(--bg-canvas);
+      border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.3rem;
     }
 
     label {
-      display: block;
-      margin: 0.9rem 0 0.35rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      display: block; margin: 0.9rem 0 0.35rem; font-size: 0.76rem; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;
     }
-
     label:first-of-type { margin-top: 0; }
+    label .sub { text-transform: none; font-weight: 400; color: var(--text-faint); }
 
     input, textarea, select {
-      width: 100%;
-      padding: 0.55rem 0.7rem;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      color: var(--text-primary);
-      font-family: var(--sans);
-      font-size: 0.9rem;
+      width: 100%; padding: 0.55rem 0.7rem; background: var(--bg-canvas); border: 1px solid var(--border);
+      border-radius: 7px; color: var(--text-primary); font-family: var(--sans); font-size: 0.9rem;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-
     textarea { font-family: var(--mono); font-size: 0.82rem; resize: vertical; }
-
     input::placeholder, textarea::placeholder { color: var(--text-faint); }
-
     input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
     }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 
-    select {
-      appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-                         linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-      background-position: calc(100% - 18px) center, calc(100% - 13px) center;
-      background-size: 5px 5px, 5px 5px;
-      background-repeat: no-repeat;
+    .checks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .checks label {
+      margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; text-transform: none;
+      letter-spacing: 0; font-weight: 500; font-size: 0.85rem; color: var(--text-primary);
+      background: var(--bg-canvas); border: 1px solid var(--border); border-radius: 7px;
+      padding: 0.4rem 0.65rem; cursor: pointer;
     }
+    .checks input { width: auto; }
 
-    button {
-      margin-top: 1rem;
-      padding: 0.6rem 1.1rem;
-      border: 1px solid transparent;
-      border-radius: 7px;
-      font-family: var(--sans);
-      font-size: 0.86rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.08s ease, filter 0.15s ease, background 0.15s ease;
+    button.btn {
+      margin-top: 1rem; padding: 0.6rem 1.1rem; border: 1px solid transparent; border-radius: 7px;
+      font-family: var(--sans); font-size: 0.86rem; font-weight: 600; cursor: pointer;
+      transition: transform 0.08s ease, filter 0.15s ease;
     }
-
-    button:active { transform: translateY(1px); }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #06101f;
-    }
+    button.btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: #06101f; }
     .btn-primary:hover { filter: brightness(1.08); }
-
-    .btn-secondary {
-      background: transparent;
-      border-color: var(--border);
-      color: var(--text-primary);
-    }
+    .btn-secondary { background: transparent; border-color: var(--border); color: var(--text-primary); }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
     .btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .btn-sm { margin-top: 0; padding: 0.35rem 0.7rem; font-size: 0.78rem; }
 
     #token {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      word-break: break-all;
-      background: var(--bg-canvas);
-      border: 1px dashed var(--border);
-      color: var(--text-muted);
-      padding: 0.65rem 0.75rem;
-      border-radius: 7px;
-      min-height: 1.2rem;
+      font-family: var(--mono); font-size: 0.8rem; word-break: break-all; background: var(--bg-canvas);
+      border: 1px dashed var(--border); color: var(--text-muted); padding: 0.65rem 0.75rem;
+      border-radius: 7px; min-height: 1.2rem;
     }
+    #token.has-token { color: var(--accent-2); border-style: solid; border-color: var(--border); }
 
-    #token.has-token {
-      color: var(--accent-2);
-      border-style: solid;
-      border-color: var(--border);
+    /* Inbox items (in bell panel) */
+    .inbox-list { display: grid; gap: 0.5rem; }
+    .inbox-empty { color: var(--text-faint); font-size: 0.84rem; text-align: center; padding: 1rem 0; }
+    .inbox-item {
+      border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 7px;
+      padding: 0.55rem 0.7rem; background: var(--bg-canvas);
     }
+    .inbox-item.unread { border-left-color: var(--accent); }
+    .inbox-item .it-title { font-weight: 600; font-size: 0.88rem; }
+    .inbox-item .it-body { color: var(--text-muted); font-size: 0.83rem; }
+    .inbox-item .it-meta { color: var(--text-faint); font-size: 0.7rem; font-family: var(--mono); margin-top: 0.3rem; }
 
     #log {
-      background: #070a12;
-      color: var(--accent-2);
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      padding: 0.85rem;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      height: 200px;
-      overflow: auto;
-      white-space: pre-wrap;
+      background: #070a12; color: var(--accent-2); font-family: var(--mono); font-size: 0.8rem;
+      padding: 0.85rem; border-radius: 7px; border: 1px solid var(--border); height: 180px;
+      overflow: auto; white-space: pre-wrap;
     }
-
-    #log:empty::before {
-      content: "// chưa có hoạt động nào — log sẽ hiện tại đây";
-      color: var(--text-faint);
-    }
+    #log:empty::before { content: "// log sẽ hiện ở đây"; color: var(--text-faint); }
 
     @media (max-width: 480px) {
-      .page-head { flex-direction: column; }
-      .step-head span.hint { display: none; }
+      .page-head { align-items: flex-start; }
+      .row2 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -248,65 +196,119 @@
 
   <div class="page-head">
     <div>
-      <h1>FCM Notification Tester</h1>
-      <p>Công cụ kiểm thử gửi/nhận push notification qua Firebase Cloud Messaging</p>
+      <h1>Notification Tester</h1>
+      <p>Đăng ký device &amp; gửi thông báo qua notification service</p>
     </div>
-    <span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">chưa kết nối</span></span>
+    <div class="head-actions">
+    <button class="rt-btn" id="rtBtn" title="Realtime SSE (out-app presence)">
+      <span class="rt-dot off" id="rtDot"></span> Realtime
+    </button>
+    <div class="bell">
+      <button class="bell-btn" id="bellBtn" title="Hộp thư (INAPP)">🔔<span class="bell-badge" id="bellBadge">0</span></button>
+      <div class="bell-panel" id="bellPanel">
+        <div class="bell-panel-head">
+          <h3>Hộp thư INAPP</h3>
+          <button class="btn btn-secondary btn-sm" id="inboxRefreshBtn">Tải lại</button>
+        </div>
+        <div class="inbox-list" id="inbox"></div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="userbar">
+    <label>User ID <span class="sub">(dùng chung: đăng ký device · người nhận mặc định · hộp thư)</span></label>
+    <input id="userId" placeholder="vd: demo-user" value="demo-user" />
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="device">Thiết bị</button>
+    <button class="tab" data-tab="send">Gửi thông báo</button>
+  </div>
+
+  <!-- TAB: Thiết bị -->
+  <div class="tab-panel active" id="tab-device">
+    <section>
+      <p class="note">
+        Bật nhận thông báo để lấy <b>FCM token</b> của trình duyệt này; token sẽ <b>tự đăng ký</b>
+        cho <b>User ID</b> ở trên với notification service.
+      </p>
+      <button class="btn btn-primary" id="enableBtn">Bật nhận thông báo</button>
+      <label>FCM Token</label>
+      <div id="token">chưa có token</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="copyBtn">Copy token</button>
+        <button class="btn btn-secondary" id="registerBtn">Đăng ký lại</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: Gửi thông báo -->
+  <div class="tab-panel" id="tab-send">
+    <section>
+      <p class="note">
+        Gửi qua ingest API <code>POST /api/v1/notification</code>. Chọn <b>channels</b>: PUSH (fan-out
+        mọi máy), INAPP (vào hộp thư 🔔), EMAIL/SMS/ZNS (skeleton). Đặt <b>type</b> =
+        <code>PAYMENT_FAILED</code> để kích <b>OUTAPP nudge</b> — bật <b>Realtime</b> (góc trên) trước
+        để nhận qua SSE realtime; không bật thì nudge đi <b>push</b>.
+      </p>
+
+      <label>Recipient (User ID) <span class="sub">— mặc định theo User ID chung</span></label>
+      <input id="sendRecipient" placeholder="vd: demo-user" />
+
+      <label>Channels</label>
+      <div class="checks">
+        <label><input type="checkbox" class="ch" value="PUSH" checked /> PUSH</label>
+        <label><input type="checkbox" class="ch" value="INAPP" /> INAPP</label>
+        <label><input type="checkbox" class="ch" value="EMAIL" /> EMAIL</label>
+        <label><input type="checkbox" class="ch" value="SMS" /> SMS</label>
+        <label><input type="checkbox" class="ch" value="ZALO_ZNS" /> ZALO_ZNS</label>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Type</label>
+          <input id="sendType" value="BOOKING_CONFIRMED" />
+        </div>
+        <div>
+          <label>Template code</label>
+          <input id="sendTemplate" value="booking_confirmed" />
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Locale</label>
+          <select id="sendLocale">
+            <option value="vi">vi</option>
+            <option value="en">en</option>
+            <option value="vi_VN">vi_VN</option>
+            <option value="en_US">en_US</option>
+          </select>
+        </div>
+        <div>
+          <label>Priority</label>
+          <select id="sendPriority">
+            <option value="HIGH">HIGH</option>
+            <option value="BULK">BULK</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Event ref <span class="sub">(idempotency — để trống = tự sinh mỗi lần)</span></label>
+      <input id="sendEventRef" placeholder="để trống = tự sinh; gửi lại cùng ref sẽ bị bỏ qua" />
+
+      <label>Data <span class="sub">(JSON template vars — tùy chọn)</span></label>
+      <textarea id="sendData" rows="3" placeholder='{"name":"An"}'></textarea>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="sendBtn">Gửi</button>
+      </div>
+    </section>
   </div>
 
   <section>
-    <div class="step-head">
-      <span class="step-num">01</span>
-      <h2>Nhận (client)</h2>
-      <span class="hint">device token</span>
-    </div>
-    <label>User ID</label>
-    <input id="userId" placeholder="vd: demo-user" value="demo-user" />
-    <button id="enableBtn" class="btn-primary">Bật nhận thông báo</button>
-    <label>FCM Token</label>
-    <div id="token">chưa có token</div>
-    <div class="btn-row">
-      <button id="copyBtn" class="btn-secondary">Copy token</button>
-      <button id="registerBtn" class="btn-secondary">Đăng ký với notification service</button>
-    </div>
-  </section>
-
-  <section>
-    <div class="step-head">
-      <span class="step-num">02</span>
-      <h2>Gửi (server)</h2>
-      <span class="hint">payload</span>
-    </div>
-
-    <label>Target type</label>
-    <select id="targetType">
-      <option value="token">token</option>
-      <option value="topic">topic</option>
-    </select>
-
-    <label>Target value (token hoặc topic)</label>
-    <input id="targetValue" placeholder="dán token hoặc nhập tên topic" />
-
-    <label>Tiêu đề</label>
-    <input id="title" placeholder="Tiêu đề" />
-
-    <label>Nội dung</label>
-    <input id="body" placeholder="Nội dung" />
-
-    <label>Data (JSON, tùy chọn)</label>
-    <textarea id="data" rows="3" placeholder='{"key":"value"}'></textarea>
-
-    <div class="btn-row">
-      <button id="sendBtn" class="btn-primary">Gửi notification</button>
-    </div>
-  </section>
-
-  <section>
-    <div class="step-head">
-      <span class="step-num">03</span>
-      <h2>Log</h2>
-      <span class="hint">realtime</span>
-    </div>
+    <label style="margin-top:0">Log</label>
     <div id="log"></div>
   </section>
 
