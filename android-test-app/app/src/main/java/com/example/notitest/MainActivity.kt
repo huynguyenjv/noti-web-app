@@ -72,7 +72,6 @@ class MainActivity : AppCompatActivity() {
         binding.registerButton.setOnClickListener { registerDevice() }
         binding.rtButton.setOnClickListener { toggleRealtime() }
         binding.sendButton.setOnClickListener { sendViaNotificationService() }
-        binding.sendDirectButton.setOnClickListener { sendDirectFcm() }
         binding.inboxRefreshButton.setOnClickListener { loadInbox() }
     }
 
@@ -237,28 +236,6 @@ class MainActivity : AppCompatActivity() {
                     log("err Gửi lỗi: $detail")
                 }
             }
-        }
-    }
-
-    /** POST /api/send — bắn FCM thẳng tới token máy này, bỏ qua notification service (self-test). */
-    private fun sendDirectFcm() {
-        val base = baseUrl() ?: return
-        if (token.isEmpty()) return log("Chưa có token — không gửi được")
-
-        val data = parseDataInput().getOrElse { return }
-        val payload = JSONObject()
-            .put("target", JSONObject().put("type", "token").put("value", token))
-            .put(
-                "notification",
-                JSONObject()
-                    .put("title", "Self-test")
-                    .put("body", "FCM trực tiếp từ Noti Test")
-            )
-        data?.let { payload.put("data", it) }
-
-        log("Đang gửi FCM trực tiếp tới máy này ...")
-        Backend.send(base, payload) { ok, detail ->
-            main.post { log(if (ok) "ok  Gửi thành công ($detail)." else "err Gửi lỗi: $detail") }
         }
     }
 

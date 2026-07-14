@@ -2,4 +2,11 @@
 <resources>
     <string name="app_name">Noti Test</string>
     <string name="default_notification_channel_id">noti_test_default</string>
+
+    <!--
+      Host của vtrip.core.notification, điền sẵn vào ô URL khi mở app.
+      Đổi dòng này rồi build lại là APK giao cho người khác dùng được ngay, không phải gõ tay.
+      10.0.2.2 = localhost của máy host, chỉ đúng trên emulator.
+    -->
+    <string name="default_service_url">http://10.0.2.2:8083</string>
 </resources>

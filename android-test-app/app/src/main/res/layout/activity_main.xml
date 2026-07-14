@@ -97,7 +97,7 @@
 
                 <TextView
                     style="@style/FieldLabel"
-                    android:text="Backend URL" />
+                    android:text="Notification service URL" />
 
                 <EditText
                     android:id="@+id/backendUrl"
@@ -105,8 +105,16 @@
                     android:fontFamily="monospace"
                     android:textSize="13sp"
                     android:inputType="textUri"
-                    android:hint="https://backend.example.com"
-                    android:text="http://10.0.2.2:3000" />
+                    android:hint="https://notification.example.com"
+                    android:text="@string/default_service_url" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_faint"
+                    android:text="App gọi thẳng /api/v1/* của service — không cần dựng web server." />
 
                 <TextView
                     style="@style/FieldLabel"
@@ -403,13 +411,6 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="16dp"
                     android:text="Gửi notification" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/sendDirectButton"
-                    style="@style/BtnQuiet"
-                    android:layout_width="match_parent"
-                    android:layout_marginTop="8dp"
-                    android:text="Bỏ qua service, bắn FCM thẳng về máy này" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
