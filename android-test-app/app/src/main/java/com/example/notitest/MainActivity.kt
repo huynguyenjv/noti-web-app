@@ -20,12 +20,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import com.example.notitest.databinding.ActivityMainBinding
 import com.example.notitest.databinding.ItemInboxBinding
-import com.google.android.material.chip.Chip
 import com.google.firebase.messaging.FirebaseMessaging
 import okhttp3.sse.EventSource
-import org.json.JSONException
-import org.json.JSONObject
 
+/**
+ * Máy khách NHẬN thông báo. Chỉ có: đăng ký device token → nhận push → đọc hộp thư INAPP →
+ * bật/tắt realtime (presence). Việc GỬI notification nằm ở console web (noti-web) — đúng như
+ * production, khách hàng không tự bắn noti cho mình.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -59,11 +61,8 @@ class MainActivity : AppCompatActivity() {
         restoreConfig()
         fetchToken()
 
-        binding.recipientInput.setText(userId())
-
         // Đổi User ID → hộp thư cũ không còn đúng; realtime phải nối lại theo user mới (giống web).
         binding.userIdInput.doAfterTextChanged {
-            binding.recipientInput.setText(userId())
             clearInbox()
             if (sse != null) connectStream()
         }
@@ -71,7 +70,6 @@ class MainActivity : AppCompatActivity() {
         binding.copyButton.setOnClickListener { copyToken() }
         binding.registerButton.setOnClickListener { registerDevice() }
         binding.rtButton.setOnClickListener { toggleRealtime() }
-        binding.sendButton.setOnClickListener { sendViaNotificationService() }
         binding.inboxRefreshButton.setOnClickListener { loadInbox() }
     }
 
@@ -203,66 +201,6 @@ class MainActivity : AppCompatActivity() {
         binding.rtStatus.text = text
     }
 
-    // ------------------------------------------------------------------ send
-    /** POST /api/notify — qua notification service, fan-out theo channel (giống nút Gửi bên web). */
-    private fun sendViaNotificationService() {
-        val base = baseUrl() ?: return
-
-        val recipientId = binding.recipientInput.text.toString().trim().ifEmpty { userId() }
-        if (recipientId.isEmpty()) return log("err Nhập Recipient (User ID).")
-
-        val channels = selectedChannels()
-        if (channels.isEmpty()) return log("err Chọn ít nhất 1 channel.")
-
-        val data = parseDataInput().getOrElse { return }
-
-        Backend.notify(
-            baseUrl = base,
-            recipientId = recipientId,
-            channels = channels,
-            type = binding.typeInput.text.toString().trim(),
-            templateCode = binding.templateInput.text.toString().trim(),
-            locale = binding.localeSpinner.selectedItem?.toString(),
-            priority = binding.prioritySpinner.selectedItem?.toString(),
-            eventRef = binding.eventRefInput.text.toString().trim(),
-            data = data,
-        ) { ok, detail ->
-            main.post {
-                if (ok) {
-                    log("ok  Đã gửi [${channels.joinToString(",")}] tới \"$recipientId\" ($detail).")
-                    // INAPP gửi cho chính user đang xem → làm mới hộp thư.
-                    if (channels.contains("INAPP") && recipientId == userId()) loadInbox()
-                } else {
-                    log("err Gửi lỗi: $detail")
-                }
-            }
-        }
-    }
-
-    private fun selectedChannels(): List<String> = buildList {
-        fun add(chip: Chip, name: String) { if (chip.isChecked) add(name) }
-        add(binding.chPush, "PUSH")
-        add(binding.chInapp, "INAPP")
-        add(binding.chEmail, "EMAIL")
-        add(binding.chSms, "SMS")
-        add(binding.chZalo, "ZALO_ZNS")
-    }
-
-    /**
-     * Ô Data: rỗng → success(null) (không gửi field); JSON hỏng → failure (caller dừng lại).
-     * Phải phân biệt hai ca này, nếu không data rỗng sẽ bị coi là lỗi.
-     */
-    private fun parseDataInput(): Result<JSONObject?> {
-        val raw = binding.dataInput.text.toString().trim()
-        if (raw.isEmpty()) return Result.success(null)
-        return try {
-            Result.success(JSONObject(raw))
-        } catch (e: JSONException) {
-            log("err Data không phải JSON hợp lệ.")
-            Result.failure(e)
-        }
-    }
-
     // ------------------------------------------------------------------ inbox
     private fun loadInbox() {
         val base = baseUrl() ?: return
@@ -299,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         if (items.isEmpty()) {
             val empty = ItemInboxBinding.inflate(layoutInflater, binding.inboxContainer, true)
             empty.itemTitle.text = "Chưa có tin nào"
-            empty.itemBody.text = "Gửi một notification với channel INAPP để thấy nó ở đây."
+            empty.itemBody.text = "Bắn INAPP từ console web tới User ID này để thấy tin ở đây."
             empty.itemDot.visibility = android.view.View.GONE
             return
         }

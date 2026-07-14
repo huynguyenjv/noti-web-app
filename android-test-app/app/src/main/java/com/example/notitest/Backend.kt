@@ -29,7 +29,10 @@ data class InboxItem(
 
 /**
  * Client gọi THẲNG các endpoint /api/v1 của vtrip.core.notification, không qua noti-web.
- * App chỉ cần một host duy nhất → phát APK cho người khác chỉ việc trỏ host, không phải dựng web server.
+ *
+ * App này là MÁY KHÁCH — chỉ NHẬN thông báo: đăng ký device token, đọc hộp thư INAPP, mở stream
+ * realtime. Việc GỬI notification thuộc về console web (noti-web), giống production: khách hàng
+ * không tự bắn noti cho mình.
  *
  * Dùng chung cho MainActivity và MyFirebaseMessagingService: service cần đăng ký lại device khi FCM
  * refresh token (lúc đó không có UI), nên host + userId được lưu trong SharedPreferences.
@@ -39,13 +42,6 @@ object Backend {
     private const val PREFS = "noti_test"
     private const val KEY_BASE_URL = "base_url"
     private const val KEY_USER_ID = "user_id"
-
-    /**
-     * POST /api/v1/devices yêu cầu header Authentication. Đây là JWT test dùng chung với noti-web
-     * (bản demo chưa gắn IAM); production sẽ lấy từ phiên đăng nhập của user.
-     */
-    private const val AUTH_TOKEN =
-        "Bearer eyJhbGciOiJSUzI1NiJ9.eyJ2aWQiOiIzNDRkNjA2Mi00MzFjLTQ3MWEtYjM3Yi01Yzc3N2NmZWQxNjEiLCJzdWIiOiI4Yjk1OTg2ZC1kY2NkLTQ0ZGQtOGJlOS05OTQwYmFjZmQzZDgiLCJhY3RvclR5cGUiOjIsInZjbWlkIjoiIiwiaXNzIjoiZ3QtYXBwIiwiZXhwIjoxNzk2NTUxODA1LCJ2bXQiOiIiLCJpYXQiOjE3NjQ5OTQyMDUsInByb3YiOiJTWVNURU1fUFJPVklERVIifQ.f1KAy5dowZ5_3QcaMKqwxigJp-sbygbQGvZS5MNNcMc7pYpTT1a4-igUJRnYTUlrgD1RuNDMQ0Z1osJlu1rHcnksOFjrTYCW3cQuT5eqYPnbPiuhKAS8ylKJGLdKkxkdxtC3Psb4Mp2e9bO5MoWtHWvAiv3fwm04xF6ImWvp9W_2is7Mfex28X6eocK0M0Bp1_oG0Bw6Y1_rxPa87M-xtqnViA3wGOLyTP4W5c9tG-q0WYXh-FmfzB1kcz5qdNuNUR2EIOcAiyZMyL5unRx0qp-FWQfBRr4t7hVpy5MG5RsTEZP2K-WMtpeI348RgpMA6fbOYn1xbziI9wwx-HVfnA"
 
     private val JSON = "application/json".toMediaType()
 
@@ -85,7 +81,6 @@ object Backend {
 
         val req = Request.Builder()
             .url("$baseUrl/api/v1/devices")
-            .header("Authentication", AUTH_TOKEN)
             .post(body.toString().toRequestBody(JSON))
             .build()
 
@@ -93,47 +88,6 @@ object Backend {
             when {
                 err != null -> onResult(false, err)
                 code == 201 -> onResult(true, "HTTP 201")
-                else -> onResult(false, "HTTP $code: $text")
-            }
-        }
-    }
-
-    /**
-     * POST /api/v1/notification — ingest API: recipientId → ContactResolver → fan-out theo channel.
-     * Service nhận rồi xử lý bất đồng bộ nên trả 202 (chấp nhận), không phải 200.
-     */
-    fun notify(
-        baseUrl: String,
-        recipientId: String,
-        channels: List<String>,
-        type: String?,
-        templateCode: String?,
-        locale: String?,
-        priority: String?,
-        eventRef: String?,
-        data: JSONObject?,
-        onResult: (Boolean, String) -> Unit,
-    ) {
-        val ref = eventRef?.takeIf { it.isNotEmpty() } ?: "android-${System.currentTimeMillis()}"
-        val body = JSONObject()
-            .put("recipientId", recipientId)
-            .put("channels", JSONArray(channels))
-            .put("templateCode", templateCode?.takeIf { it.isNotEmpty() } ?: "booking_confirmed")
-            .put("type", type?.takeIf { it.isNotEmpty() } ?: "BOOKING_CONFIRMED")
-            .put("locale", locale?.takeIf { it.isNotEmpty() } ?: "vi")
-            .put("priority", priority?.takeIf { it.isNotEmpty() } ?: "HIGH")
-            .put("eventRef", ref)
-        data?.let { body.put("data", it) }
-
-        val req = Request.Builder()
-            .url("$baseUrl/api/v1/notification")
-            .post(body.toString().toRequestBody(JSON))
-            .build()
-
-        call(req) { code, text, err ->
-            when {
-                err != null -> onResult(false, err)
-                code == 202 || code == 200 -> onResult(true, "HTTP $code · eventRef=$ref")
                 else -> onResult(false, "HTTP $code: $text")
             }
         }

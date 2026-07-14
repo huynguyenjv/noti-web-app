@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notification Tester</title>
+  <title>Notification Console</title>
   <style>
     :root {
       --bg-canvas: #0b0f19;
       --bg-panel: #121826;
       --bg-panel-raised: #171f30;
+      --bg-side: #0d1220;
       --border: #232c42;
       --border-soft: #1b2337;
       --text-primary: #e7ecf5;
@@ -23,41 +24,66 @@
       --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
       --sans: "Inter", system-ui, -apple-system, sans-serif;
     }
-
     * { box-sizing: border-box; }
-
+    html, body { height: 100%; }
     body {
-      font-family: var(--sans);
-      background: var(--bg-canvas);
-      background-image:
-        radial-gradient(circle at 15% 0%, rgba(79, 140, 255, 0.08), transparent 40%),
-        radial-gradient(circle at 85% 10%, rgba(52, 211, 153, 0.06), transparent 35%);
-      color: var(--text-primary);
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 2rem 1.25rem 4rem;
-      line-height: 1.5;
+      margin: 0; font-family: var(--sans); background: var(--bg-canvas);
+      color: var(--text-primary); line-height: 1.5;
     }
 
-    .page-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 1.1rem;
+    /* ---------------- Shell ---------------- */
+    .shell { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+
+    /* ---------------- Sidebar ---------------- */
+    .sidebar {
+      background: var(--bg-side); border-right: 1px solid var(--border-soft);
+      padding: 1.1rem 0.8rem; position: sticky; top: 0; height: 100vh;
+      display: flex; flex-direction: column; gap: 1.2rem;
+    }
+    .brand { display: flex; align-items: center; gap: 0.55rem; padding: 0.2rem 0.5rem; }
+    .brand .logo { font-size: 1.3rem; }
+    .brand .t { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand .t b { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand .t small { font-size: 0.68rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .nav { display: flex; flex-direction: column; gap: 0.2rem; }
+    .nav-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); padding: 0 0.6rem; margin-bottom: 0.3rem; }
+    .tab {
+      display: flex; align-items: center; gap: 0.65rem; width: 100%; text-align: left;
+      background: none; border: none; border-radius: 8px; color: var(--text-muted);
+      padding: 0.6rem 0.7rem; font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    .tab .ic { font-size: 1.05rem; width: 1.3rem; text-align: center; }
+    .tab:hover { background: var(--bg-panel); color: var(--text-primary); }
+    .tab.active { background: var(--accent-soft); color: var(--accent); }
+
+    .side-foot { margin-top: auto; font-size: 0.72rem; color: var(--text-faint); padding: 0.5rem 0.6rem; border-top: 1px solid var(--border-soft); }
+    .side-foot code { font-size: 0.85em; }
+
+    /* ---------------- Content ---------------- */
+    .content { min-width: 0; display: flex; flex-direction: column; }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      background: color-mix(in srgb, var(--bg-canvas) 88%, transparent);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border-soft);
+      padding: 0.7rem 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
     }
-    .page-head h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.3rem; }
-    .page-head p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+    .view-title { font-size: 1rem; font-weight: 600; margin: 0; }
+    .topbar-spacer { flex: 1; }
+    .userfield { display: flex; align-items: center; gap: 0.5rem; }
+    .userfield label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .userfield input { width: 190px; padding: 0.4rem 0.6rem; font-family: var(--mono); font-size: 0.82rem; }
 
-    .head-actions { display: flex; align-items: center; gap: 0.6rem; }
+    .views { padding: 1.5rem; width: 100%; max-width: 860px; flex: 1; }
 
-    /* Realtime toggle */
+    /* ---------------- Realtime toggle ---------------- */
     .rt-btn {
       display: inline-flex; align-items: center; gap: 0.45rem; background: var(--bg-panel);
       border: 1px solid var(--border); color: var(--text-muted); border-radius: 999px;
-      padding: 0.4rem 0.8rem; font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
+      padding: 0.4rem 0.8rem; font-family: var(--sans); font-size: 0.78rem; font-weight: 600;
       cursor: pointer; white-space: nowrap; transition: border-color 0.15s, color 0.15s;
     }
     .rt-btn:hover { border-color: var(--accent); }
@@ -67,11 +93,11 @@
     .rt-dot.on { background: var(--accent-2); box-shadow: 0 0 0 3px var(--accent-2-soft); }
     @keyframes pulse { 50% { opacity: 0.35; } }
 
-    /* Bell */
+    /* ---------------- Bell ---------------- */
     .bell { position: relative; }
     .bell-btn {
       background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-primary);
-      width: 42px; height: 42px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+      width: 40px; height: 40px; border-radius: 50%; font-size: 1.05rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
     }
     .bell-btn:hover { border-color: var(--accent); }
@@ -82,35 +108,24 @@
     }
     .bell-badge.show { display: flex; }
     .bell-panel {
-      position: absolute; top: 52px; right: 0; width: min(360px, 90vw); max-height: 420px; overflow: auto;
+      position: absolute; top: 50px; right: 0; width: min(360px, 90vw); max-height: 420px; overflow: auto;
       background: var(--bg-panel-raised); border: 1px solid var(--border); border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); padding: 0.75rem; z-index: 20; display: none;
     }
     .bell-panel.open { display: block; }
-    .bell-panel-head {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;
-    }
+    .bell-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
     .bell-panel-head h3 { margin: 0; font-size: 0.9rem; }
 
-    /* User bar */
-    .userbar { margin-bottom: 1.1rem; }
-
-    /* Tabs */
-    .tabs { display: flex; gap: 0.35rem; margin-bottom: 1.1rem; border-bottom: 1px solid var(--border-soft); }
-    .tab {
-      background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted);
-      padding: 0.6rem 0.9rem; font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; margin-bottom: -1px;
-    }
-    .tab:hover { color: var(--text-primary); }
-    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    /* ---------------- Panels / cards ---------------- */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
     section {
       background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
       padding: 1.3rem 1.4rem 1.5rem; margin-bottom: 1.1rem;
     }
+    .step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+    .step-head h2 { font-size: 0.98rem; font-weight: 600; margin: 0; }
+    .step-head .hint { margin-left: auto; font-size: 0.72rem; color: var(--text-faint); font-family: var(--mono); }
 
     .note { margin: 0 0 0.9rem; color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
     .note b { color: var(--text-primary); font-weight: 600; }
@@ -133,9 +148,7 @@
     }
     textarea { font-family: var(--mono); font-size: 0.82rem; resize: vertical; }
     input::placeholder, textarea::placeholder { color: var(--text-faint); }
-    input:focus, textarea:focus, select:focus {
-      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
-    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 
     .checks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -167,150 +180,284 @@
     }
     #token.has-token { color: var(--accent-2); border-style: solid; border-color: var(--border); }
 
-    /* Inbox items (in bell panel) */
+    /* Inbox items */
     .inbox-list { display: grid; gap: 0.5rem; }
     .inbox-empty { color: var(--text-faint); font-size: 0.84rem; text-align: center; padding: 1rem 0; }
-    .inbox-item {
-      border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 7px;
-      padding: 0.55rem 0.7rem; background: var(--bg-canvas);
-    }
+    .inbox-item { border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 7px; padding: 0.55rem 0.7rem; background: var(--bg-canvas); }
     .inbox-item.unread { border-left-color: var(--accent); }
     .inbox-item .it-title { font-weight: 600; font-size: 0.88rem; }
     .inbox-item .it-body { color: var(--text-muted); font-size: 0.83rem; }
     .inbox-item .it-meta { color: var(--text-faint); font-size: 0.7rem; font-family: var(--mono); margin-top: 0.3rem; }
 
+    /* Template table */
+    .table-wrap { overflow-x: auto; margin-top: 0.4rem; }
+    .tpl-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .tpl-table th {
+      text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--text-muted); font-weight: 600; padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .tpl-table td { padding: 0.5rem 0.5rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    .tpl-table tr:last-child td { border-bottom: none; }
+    .tpl-table .c-code { font-weight: 600; }
+    .tpl-table .c-ch, .tpl-table .c-loc, .tpl-table .c-ver { font-family: var(--mono); color: var(--text-muted); white-space: nowrap; }
+    .tpl-empty { color: var(--text-faint); text-align: center; padding: 1rem 0 !important; }
+    .tpl-status {
+      display: inline-block; font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+      padding: 0.12rem 0.45rem; border-radius: 5px; letter-spacing: 0.03em; white-space: nowrap;
+    }
+    .st-DRAFT { background: var(--border-soft); color: var(--text-muted); }
+    .st-SUBMITTED { background: rgba(245,196,81,0.14); color: #f5c451; }
+    .st-APPROVED { background: var(--accent-soft); color: var(--accent); }
+    .st-ACTIVE { background: var(--accent-2-soft); color: var(--accent-2); }
+    .st-DEPRECATED { background: rgba(242,97,122,0.12); color: var(--danger); }
+    .tpl-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .tpl-actions .btn { margin-top: 0; padding: 0.25rem 0.55rem; font-size: 0.72rem; }
+
+    /* ---------------- Log drawer ---------------- */
+    .logdrawer {
+      border-top: 1px solid var(--border-soft); background: var(--bg-side);
+      position: sticky; bottom: 0;
+    }
+    .logdrawer > summary {
+      list-style: none; cursor: pointer; padding: 0.5rem 1.5rem; font-size: 0.76rem;
+      font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+      display: flex; align-items: center; gap: 0.5rem; user-select: none;
+    }
+    .logdrawer > summary::-webkit-details-marker { display: none; }
+    .logdrawer > summary::before { content: "▸"; font-size: 0.7rem; transition: transform 0.15s; }
+    .logdrawer[open] > summary::before { transform: rotate(90deg); }
     #log {
-      background: #070a12; color: var(--accent-2); font-family: var(--mono); font-size: 0.8rem;
-      padding: 0.85rem; border-radius: 7px; border: 1px solid var(--border); height: 180px;
-      overflow: auto; white-space: pre-wrap;
+      background: #070a12; color: var(--accent-2); font-family: var(--mono); font-size: 0.78rem;
+      padding: 0.85rem 1.5rem; height: 160px; overflow: auto; white-space: pre-wrap;
+      border-top: 1px solid var(--border-soft);
     }
     #log:empty::before { content: "// log sẽ hiện ở đây"; color: var(--text-faint); }
 
-    @media (max-width: 480px) {
-      .page-head { align-items: flex-start; }
+    /* ---------------- Responsive ---------------- */
+    @media (max-width: 860px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static; height: auto; flex-direction: row; align-items: center; gap: 0.8rem;
+        overflow-x: auto; padding: 0.7rem 1rem;
+      }
+      .brand .t small { display: none; }
+      .nav { flex-direction: row; gap: 0.3rem; }
+      .nav-label, .side-foot { display: none; }
+      .tab { white-space: nowrap; }
+      .userfield input { width: 140px; }
+      .views { padding: 1.1rem; }
+    }
+    @media (max-width: 520px) {
       .row2 { grid-template-columns: 1fr; }
+      .brand .t { display: none; }
+      .tab .ic { margin: 0; }
+      .tab span:not(.ic) { display: none; }
     }
   </style>
 </head>
 <body>
+  <div class="shell">
 
-  <div class="page-head">
-    <div>
-      <h1>Notification Tester</h1>
-      <p>Đăng ký device &amp; gửi thông báo qua notification service</p>
+    <!-- ============ Sidebar ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="logo">🔔</span>
+        <span class="t"><b>Notification</b><small>Console</small></span>
+      </div>
+      <nav class="nav">
+        <div class="nav-label">Kênh</div>
+        <button class="tab active" data-tab="device"><span class="ic">📱</span> <span>Thiết bị</span></button>
+        <button class="tab" data-tab="send"><span class="ic">📤</span> <span>Gửi thông báo</span></button>
+        <button class="tab" data-tab="template"><span class="ic">📄</span> <span>Template</span></button>
+      </nav>
+      <div class="side-foot">
+        Service: <code id="svcUrl">/api/v1</code><br />Máy khách gửi qua proxy noti-web.
+      </div>
+    </aside>
+
+    <!-- ============ Content ============ -->
+    <div class="content">
+
+      <header class="topbar">
+        <h1 class="view-title" id="viewTitle">Thiết bị</h1>
+        <div class="topbar-spacer"></div>
+        <div class="userfield">
+          <label for="userId">User ID</label>
+          <input id="userId" placeholder="vd: demo-user" value="demo-user" />
+        </div>
+        <button class="rt-btn" id="rtBtn" title="Realtime SSE (out-app presence)">
+          <span class="rt-dot off" id="rtDot"></span> Realtime
+        </button>
+        <div class="bell">
+          <button class="bell-btn" id="bellBtn" title="Hộp thư (INAPP)">🔔<span class="bell-badge" id="bellBadge">0</span></button>
+          <div class="bell-panel" id="bellPanel">
+            <div class="bell-panel-head">
+              <h3>Hộp thư INAPP</h3>
+              <button class="btn btn-secondary btn-sm" id="inboxRefreshBtn">Tải lại</button>
+            </div>
+            <div class="inbox-list" id="inbox"></div>
+          </div>
+        </div>
+      </header>
+
+      <main class="views">
+
+        <!-- TAB: Thiết bị -->
+        <div class="tab-panel active" id="tab-device">
+          <section>
+            <p class="note">
+              Bật nhận thông báo để lấy <b>FCM token</b> của trình duyệt này; token sẽ <b>tự đăng ký</b>
+              cho <b>User ID</b> (góc trên) với notification service.
+            </p>
+            <button class="btn btn-primary" id="enableBtn">Bật nhận thông báo</button>
+            <label>FCM Token</label>
+            <div id="token">chưa có token</div>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="copyBtn">Copy token</button>
+              <button class="btn btn-secondary" id="registerBtn">Đăng ký lại</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- TAB: Gửi thông báo -->
+        <div class="tab-panel" id="tab-send">
+          <section>
+            <p class="note">
+              Gửi qua ingest API <code>POST /api/v1/notification</code>. Chọn <b>channels</b>: PUSH (fan-out
+              mọi máy), INAPP (vào hộp thư 🔔), EMAIL/SMS/ZNS (skeleton). Đặt <b>type</b> =
+              <code>PAYMENT_FAILED</code> để kích <b>OUTAPP nudge</b> — bật <b>Realtime</b> (góc trên) trước
+              để nhận qua SSE realtime; không bật thì nudge đi <b>push</b>.
+            </p>
+
+            <label>Recipient (User ID) <span class="sub">— mặc định theo User ID chung</span></label>
+            <input id="sendRecipient" placeholder="vd: demo-user" />
+
+            <label>Channels</label>
+            <div class="checks">
+              <label><input type="checkbox" class="ch" value="PUSH" checked /> PUSH</label>
+              <label><input type="checkbox" class="ch" value="INAPP" /> INAPP</label>
+              <label><input type="checkbox" class="ch" value="EMAIL" /> EMAIL</label>
+              <label><input type="checkbox" class="ch" value="SMS" /> SMS</label>
+              <label><input type="checkbox" class="ch" value="ZALO_ZNS" /> ZALO_ZNS</label>
+            </div>
+
+            <div class="row2">
+              <div>
+                <label>Type</label>
+                <input id="sendType" value="BOOKING_CONFIRMED" />
+              </div>
+              <div>
+                <label>Template code</label>
+                <input id="sendTemplate" value="booking_confirmed" />
+              </div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <label>Locale</label>
+                <select id="sendLocale">
+                  <option value="vi">vi</option>
+                  <option value="en">en</option>
+                  <option value="vi_VN">vi_VN</option>
+                  <option value="en_US">en_US</option>
+                </select>
+              </div>
+              <div>
+                <label>Priority</label>
+                <select id="sendPriority">
+                  <option value="HIGH">HIGH</option>
+                  <option value="BULK">BULK</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Event ref <span class="sub">(idempotency — để trống = tự sinh mỗi lần)</span></label>
+            <input id="sendEventRef" placeholder="để trống = tự sinh; gửi lại cùng ref sẽ bị bỏ qua" />
+
+            <label>Data <span class="sub">(JSON template vars — tùy chọn)</span></label>
+            <textarea id="sendData" rows="3" placeholder='{"name":"An"}'></textarea>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" id="sendBtn">Gửi</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- TAB: Template -->
+        <div class="tab-panel" id="tab-template">
+          <section>
+            <div class="step-head">
+              <h2>Template hiện có</h2>
+              <button class="btn btn-secondary btn-sm" id="tplReloadBtn" style="margin-left:auto">Tải lại</button>
+            </div>
+            <p class="note">
+              Vòng đời: <b>DRAFT → SUBMITTED → APPROVED → ACTIVE</b> (Chọn = live) → DEPRECATED. Chỉ bản
+              <b>ACTIVE</b> mới dùng được khi gửi.
+            </p>
+            <div class="table-wrap">
+              <table class="tpl-table">
+                <thead>
+                  <tr><th>Code</th><th>Channel</th><th>Locale</th><th>Ver</th><th>Status</th><th>Hành động</th></tr>
+                </thead>
+                <tbody id="tplRows">
+                  <tr><td colspan="6" class="tpl-empty">Bấm "Tải lại" để nạp danh sách.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <div class="step-head"><h2>Tạo template mới</h2></div>
+            <div class="row2">
+              <div>
+                <label>Code</label>
+                <input id="tplCode" placeholder="vd: promo_sale" />
+              </div>
+              <div>
+                <label>Channel</label>
+                <select id="tplChannel">
+                  <option value="PUSH">PUSH</option>
+                  <option value="INAPP">INAPP</option>
+                  <option value="EMAIL">EMAIL</option>
+                  <option value="SMS">SMS</option>
+                  <option value="ZALO_ZNS">ZALO_ZNS</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Locale</label>
+            <select id="tplLocale">
+              <option value="vi">vi</option>
+              <option value="en">en</option>
+              <option value="vi_VN">vi_VN</option>
+              <option value="en_US">en_US</option>
+            </select>
+
+            <label>Subject <span class="sub">(bắt buộc cho EMAIL)</span></label>
+            <input id="tplSubject" placeholder="tiêu đề" />
+
+            <label>Body</label>
+            <textarea id="tplBody" rows="3" placeholder="Nội dung template. Có thể dùng biến {{name}}…"></textarea>
+
+            <label>Provider template ref <span class="sub">(bắt buộc cho ZALO_ZNS)</span></label>
+            <input id="tplProviderRef" placeholder="template_id đã Zalo duyệt" />
+
+            <div class="btn-row">
+              <button class="btn btn-primary" id="tplCreateBtn">Tạo template (DRAFT)</button>
+            </div>
+          </section>
+        </div>
+
+      </main>
+
+      <details class="logdrawer" open>
+        <summary>Log</summary>
+        <div id="log"></div>
+      </details>
+
     </div>
-    <div class="head-actions">
-    <button class="rt-btn" id="rtBtn" title="Realtime SSE (out-app presence)">
-      <span class="rt-dot off" id="rtDot"></span> Realtime
-    </button>
-    <div class="bell">
-      <button class="bell-btn" id="bellBtn" title="Hộp thư (INAPP)">🔔<span class="bell-badge" id="bellBadge">0</span></button>
-      <div class="bell-panel" id="bellPanel">
-        <div class="bell-panel-head">
-          <h3>Hộp thư INAPP</h3>
-          <button class="btn btn-secondary btn-sm" id="inboxRefreshBtn">Tải lại</button>
-        </div>
-        <div class="inbox-list" id="inbox"></div>
-      </div>
-    </div>
-    </div>
   </div>
-
-  <div class="userbar">
-    <label>User ID <span class="sub">(dùng chung: đăng ký device · người nhận mặc định · hộp thư)</span></label>
-    <input id="userId" placeholder="vd: demo-user" value="demo-user" />
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="device">Thiết bị</button>
-    <button class="tab" data-tab="send">Gửi thông báo</button>
-  </div>
-
-  <!-- TAB: Thiết bị -->
-  <div class="tab-panel active" id="tab-device">
-    <section>
-      <p class="note">
-        Bật nhận thông báo để lấy <b>FCM token</b> của trình duyệt này; token sẽ <b>tự đăng ký</b>
-        cho <b>User ID</b> ở trên với notification service.
-      </p>
-      <button class="btn btn-primary" id="enableBtn">Bật nhận thông báo</button>
-      <label>FCM Token</label>
-      <div id="token">chưa có token</div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" id="copyBtn">Copy token</button>
-        <button class="btn btn-secondary" id="registerBtn">Đăng ký lại</button>
-      </div>
-    </section>
-  </div>
-
-  <!-- TAB: Gửi thông báo -->
-  <div class="tab-panel" id="tab-send">
-    <section>
-      <p class="note">
-        Gửi qua ingest API <code>POST /api/v1/notification</code>. Chọn <b>channels</b>: PUSH (fan-out
-        mọi máy), INAPP (vào hộp thư 🔔), EMAIL/SMS/ZNS (skeleton). Đặt <b>type</b> =
-        <code>PAYMENT_FAILED</code> để kích <b>OUTAPP nudge</b> — bật <b>Realtime</b> (góc trên) trước
-        để nhận qua SSE realtime; không bật thì nudge đi <b>push</b>.
-      </p>
-
-      <label>Recipient (User ID) <span class="sub">— mặc định theo User ID chung</span></label>
-      <input id="sendRecipient" placeholder="vd: demo-user" />
-
-      <label>Channels</label>
-      <div class="checks">
-        <label><input type="checkbox" class="ch" value="PUSH" checked /> PUSH</label>
-        <label><input type="checkbox" class="ch" value="INAPP" /> INAPP</label>
-        <label><input type="checkbox" class="ch" value="EMAIL" /> EMAIL</label>
-        <label><input type="checkbox" class="ch" value="SMS" /> SMS</label>
-        <label><input type="checkbox" class="ch" value="ZALO_ZNS" /> ZALO_ZNS</label>
-      </div>
-
-      <div class="row2">
-        <div>
-          <label>Type</label>
-          <input id="sendType" value="BOOKING_CONFIRMED" />
-        </div>
-        <div>
-          <label>Template code</label>
-          <input id="sendTemplate" value="booking_confirmed" />
-        </div>
-      </div>
-
-      <div class="row2">
-        <div>
-          <label>Locale</label>
-          <select id="sendLocale">
-            <option value="vi">vi</option>
-            <option value="en">en</option>
-            <option value="vi_VN">vi_VN</option>
-            <option value="en_US">en_US</option>
-          </select>
-        </div>
-        <div>
-          <label>Priority</label>
-          <select id="sendPriority">
-            <option value="HIGH">HIGH</option>
-            <option value="BULK">BULK</option>
-          </select>
-        </div>
-      </div>
-
-      <label>Event ref <span class="sub">(idempotency — để trống = tự sinh mỗi lần)</span></label>
-      <input id="sendEventRef" placeholder="để trống = tự sinh; gửi lại cùng ref sẽ bị bỏ qua" />
-
-      <label>Data <span class="sub">(JSON template vars — tùy chọn)</span></label>
-      <textarea id="sendData" rows="3" placeholder='{"name":"An"}'></textarea>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" id="sendBtn">Gửi</button>
-      </div>
-    </section>
-  </div>
-
-  <section>
-    <label style="margin-top:0">Log</label>
-    <div id="log"></div>
-  </section>
 
   <script type="module" src="/app.js"></script>
 </body>

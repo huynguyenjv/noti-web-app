@@ -66,12 +66,15 @@ async function init() {
 }
 
 // ---------------------------------------------------------------- Tabs
+const VIEW_TITLES = { device: 'Thiết bị', send: 'Gửi thông báo', template: 'Template' };
+const viewTitleEl = document.getElementById('viewTitle');
 document.querySelectorAll('.tab').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (viewTitleEl) viewTitleEl.textContent = VIEW_TITLES[btn.dataset.tab] || '';
   });
 });
 
@@ -310,5 +313,125 @@ function renderInbox(items) {
     inboxEl.append(el);
   }
 }
+
+// ---------------------------------------------------------------- Template
+const tplRows = document.getElementById('tplRows');
+const NEXT_ACTION = { DRAFT: 'submit', SUBMITTED: 'approve', APPROVED: 'select' };
+const ACTION_LABEL = { submit: 'Submit', approve: 'Approve', select: 'Chọn', deprecate: 'Deprecate' };
+let tplLoadedOnce = false;
+
+document.getElementById('tplReloadBtn').addEventListener('click', loadTemplateList);
+
+document.getElementById('tplCreateBtn').addEventListener('click', async () => {
+  const bodyReq = {
+    code: document.getElementById('tplCode').value.trim(),
+    channel: document.getElementById('tplChannel').value,
+    locale: document.getElementById('tplLocale').value || undefined,
+    subject: document.getElementById('tplSubject').value.trim() || undefined,
+    body: document.getElementById('tplBody').value,
+    providerTemplateRef: document.getElementById('tplProviderRef').value.trim() || undefined,
+  };
+  try {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(bodyReq),
+    });
+    const json = await readJson(res);
+    if (json.ok) {
+      log(`✅ Tạo template "${json.template.code}" (${json.template.approvalStatus}).`);
+      loadTemplateList();
+    } else {
+      log('❌ Tạo template lỗi:', json.error);
+    }
+  } catch (err) {
+    log('❌ Lỗi mạng:', err.message);
+  }
+});
+
+async function loadTemplateList() {
+  try {
+    const res = await fetch('/api/templates');
+    const json = await readJson(res);
+    if (!json.ok) return log('❌ Tải danh sách template lỗi:', json.error);
+    renderTemplateTable(json.templates);
+    tplLoadedOnce = true;
+  } catch (err) {
+    log('❌ Lỗi mạng:', err.message);
+  }
+}
+
+async function templateAction(id, action) {
+  try {
+    const res = await fetch(`/api/templates/${encodeURIComponent(id)}/${action}`, { method: 'POST' });
+    const json = await readJson(res);
+    if (json.ok) {
+      log(`✅ Template ${action} ok.`);
+      loadTemplateList();
+    } else {
+      log(`❌ ${action} lỗi:`, json.error);
+    }
+  } catch (err) {
+    log('❌ Lỗi mạng:', err.message);
+  }
+}
+
+function renderTemplateTable(items) {
+  tplRows.innerHTML = '';
+  if (!items.length) {
+    tplRows.innerHTML = '<tr><td colspan="6" class="tpl-empty">Chưa có template nào.</td></tr>';
+    return;
+  }
+  for (const t of items) {
+    const tr = document.createElement('tr');
+
+    const td = (cls, text) => {
+      const c = document.createElement('td');
+      if (cls) c.className = cls;
+      c.textContent = text;
+      return c;
+    };
+    tr.append(
+      td('c-code', t.code || '?'),
+      td('c-ch', t.channel || '?'),
+      td('c-loc', t.locale || '-'),
+      td('c-ver', 'v' + (t.version ?? '?'))
+    );
+
+    const stTd = document.createElement('td');
+    const st = document.createElement('span');
+    st.className = 'tpl-status st-' + (t.approvalStatus || 'DRAFT');
+    st.textContent = t.approvalStatus || 'DRAFT';
+    stTd.append(st);
+    tr.append(stTd);
+
+    const actTd = document.createElement('td');
+    const actions = document.createElement('div');
+    actions.className = 'tpl-actions';
+    const next = NEXT_ACTION[t.approvalStatus];
+    if (next) {
+      const b = document.createElement('button');
+      b.className = 'btn btn-primary';
+      b.textContent = ACTION_LABEL[next];
+      b.onclick = () => templateAction(t.id, next);
+      actions.append(b);
+    }
+    if (t.approvalStatus !== 'DEPRECATED') {
+      const d = document.createElement('button');
+      d.className = 'btn btn-secondary';
+      d.textContent = ACTION_LABEL.deprecate;
+      d.onclick = () => templateAction(t.id, 'deprecate');
+      actions.append(d);
+    }
+    actTd.append(actions);
+    tr.append(actTd);
+    tplRows.append(tr);
+  }
+}
+
+// Tự nạp danh sách lần đầu mở tab Template.
+document.querySelector('.tab[data-tab="template"]').addEventListener('click', () => {
+  if (!tplLoadedOnce) loadTemplateList();
+});
 
 init();

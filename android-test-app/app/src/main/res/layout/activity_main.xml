@@ -32,7 +32,7 @@
             android:layout_marginBottom="16dp"
             android:textSize="13sp"
             android:textColor="@color/text_muted"
-            android:text="Bảng đo pipeline notification" />
+            android:text="Máy khách nhận noti — bắn từ console web" />
 
         <!-- ============ SIGNATURE: thanh pipeline — sáng dần theo trạng thái thật ============ -->
         <LinearLayout
@@ -135,7 +135,7 @@
                     android:layout_marginTop="6dp"
                     android:textSize="12sp"
                     android:textColor="@color/text_faint"
-                    android:text="Dùng chung cho đăng ký, gửi, hộp thư và realtime." />
+                    android:text="Dùng chung cho đăng ký device, hộp thư và realtime. Bắn noti tới User ID này từ web." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -215,202 +215,6 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="12dp"
                     android:text="Bật realtime" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ============ Gửi ============ -->
-        <com.google.android.material.card.MaterialCardView style="@style/Card">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    style="@style/SectionLabel"
-                    android:text="Gửi qua notification service" />
-
-                <TextView
-                    style="@style/FieldLabel"
-                    android:text="Người nhận" />
-
-                <EditText
-                    android:id="@+id/recipientInput"
-                    style="@style/Input"
-                    android:fontFamily="monospace"
-                    android:textSize="13sp"
-                    android:inputType="text"
-                    android:hint="mặc định = User ID ở trên" />
-
-                <TextView
-                    style="@style/FieldLabel"
-                    android:text="Channels" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="false"
-                    app:chipSpacingVertical="0dp">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chPush"
-                        style="@style/ChannelChip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="PUSH" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chInapp"
-                        style="@style/ChannelChip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="INAPP" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chEmail"
-                        style="@style/ChannelChip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="EMAIL" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chSms"
-                        style="@style/ChannelChip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SMS" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chZalo"
-                        style="@style/ChannelChip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ZALO_ZNS" />
-                </com.google.android.material.chip.ChipGroup>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/FieldLabel"
-                            android:text="Type" />
-
-                        <EditText
-                            android:id="@+id/typeInput"
-                            style="@style/Input"
-                            android:fontFamily="monospace"
-                            android:textSize="12sp"
-                            android:inputType="textCapCharacters"
-                            android:text="BOOKING_CONFIRMED" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/FieldLabel"
-                            android:text="Template" />
-
-                        <EditText
-                            android:id="@+id/templateInput"
-                            style="@style/Input"
-                            android:fontFamily="monospace"
-                            android:textSize="12sp"
-                            android:inputType="text"
-                            android:text="booking_confirmed" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/FieldLabel"
-                            android:text="Locale" />
-
-                        <Spinner
-                            android:id="@+id/localeSpinner"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_input"
-                            android:paddingVertical="6dp"
-                            android:entries="@array/locales" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            style="@style/FieldLabel"
-                            android:text="Priority" />
-
-                        <Spinner
-                            android:id="@+id/prioritySpinner"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_input"
-                            android:paddingVertical="6dp"
-                            android:entries="@array/priorities" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TextView
-                    style="@style/FieldLabel"
-                    android:text="Event ref — để trống thì server tự sinh" />
-
-                <EditText
-                    android:id="@+id/eventRefInput"
-                    style="@style/Input"
-                    android:fontFamily="monospace"
-                    android:textSize="12sp"
-                    android:inputType="text"
-                    android:hint="tự sinh" />
-
-                <TextView
-                    style="@style/FieldLabel"
-                    android:text="Data (JSON)" />
-
-                <EditText
-                    android:id="@+id/dataInput"
-                    style="@style/Input"
-                    android:fontFamily="monospace"
-                    android:textSize="12sp"
-                    android:inputType="textMultiLine"
-                    android:minLines="2"
-                    android:gravity="top|start"
-                    android:hint="{&quot;key&quot;:&quot;value&quot;}" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/sendButton"
-                    style="@style/Btn"
-                    android:layout_width="match_parent"
-                    android:layout_marginTop="16dp"
-                    android:text="Gửi notification" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

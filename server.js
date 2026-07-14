@@ -4,6 +4,7 @@ const express = require('express');
 const { buildMessage, getMessaging } = require('./lib/sender');
 const { buildDeviceRegistration } = require('./lib/register');
 const { buildNotificationRequest } = require('./lib/notify');
+const { buildTemplateRequest, LIFECYCLE_ACTIONS } = require('./lib/template');
 
 const app = express();
 app.use(express.json());
@@ -152,6 +153,94 @@ app.get('/api/inbox', async (req, res) => {
     return res
       .status(502)
       .json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// ---- Template management (proxy to the notification service /api/v1/templates) ----
+// Create a template (starts in DRAFT).
+app.post('/api/templates', async (req, res) => {
+  let body;
+  try {
+    body = buildTemplateRequest(req.body || {});
+  } catch (err) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+  try {
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const text = await r.text();
+    if (r.status === 201 || r.status === 200) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        parsed = null;
+      }
+      const tpl = parsed && parsed.data ? parsed.data : parsed;
+      return res.json({ ok: true, template: tpl });
+    }
+    return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+  } catch (err) {
+    return res.status(502).json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// List all templates.
+app.get('/api/templates', async (req, res) => {
+  try {
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates`);
+    const text = await r.text();
+    if (!r.ok) return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+    let parsed = null;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = null;
+    }
+    const items = parsed && parsed.data ? parsed.data : parsed;
+    return res.json({ ok: true, templates: Array.isArray(items) ? items : [] });
+  } catch (err) {
+    return res.status(502).json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// Fetch a template by id.
+app.get('/api/templates/:id', async (req, res) => {
+  try {
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates/${encodeURIComponent(req.params.id)}`);
+    const text = await r.text();
+    if (!r.ok) return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+    let parsed = null;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = null;
+    }
+    return res.json({ ok: true, template: parsed && parsed.data ? parsed.data : parsed });
+  } catch (err) {
+    return res.status(502).json({ ok: false, error: `cannot reach notification service: ${err.message}` });
+  }
+});
+
+// Lifecycle transition: submit | approve | select | deprecate.
+app.post('/api/templates/:id/:action', async (req, res) => {
+  const { id, action } = req.params;
+  if (!LIFECYCLE_ACTIONS.includes(action)) {
+    return res.status(400).json({ ok: false, error: `unknown action: ${action}` });
+  }
+  try {
+    const r = await fetch(
+      `${NOTIFICATION_BASE_URL}/api/v1/templates/${encodeURIComponent(id)}/${action}`,
+      { method: 'POST' }
+    );
+    const text = await r.text();
+    if (r.ok) return res.json({ ok: true });
+    return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
+  } catch (err) {
+    return res.status(502).json({ ok: false, error: `cannot reach notification service: ${err.message}` });
   }
 });
 
