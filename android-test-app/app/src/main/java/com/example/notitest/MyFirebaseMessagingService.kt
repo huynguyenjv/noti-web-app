@@ -19,6 +19,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
      * Đăng ký lại ngay bằng config đã lưu (nếu user từng bấm "Đăng ký"), vì lúc này không có UI.
      */
     override fun onNewToken(token: String) {
+        Backend.loadBearer(this) // process có thể vừa khởi động lại → nạp Bearer từ prefs
         val base = Backend.baseUrl(this)
         val userId = Backend.userId(this)
         if (base.isEmpty() || userId.isEmpty()) return

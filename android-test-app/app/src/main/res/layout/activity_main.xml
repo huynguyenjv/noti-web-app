@@ -136,6 +136,28 @@
                     android:textSize="12sp"
                     android:textColor="@color/text_faint"
                     android:text="Dùng chung cho đăng ký device, hộp thư và realtime. Bắn noti tới User ID này từ web." />
+
+                <TextView
+                    style="@style/FieldLabel"
+                    android:text="Bearer token (tùy chọn)" />
+
+                <EditText
+                    android:id="@+id/bearerInput"
+                    style="@style/Input"
+                    android:fontFamily="monospace"
+                    android:textSize="11sp"
+                    android:inputType="textMultiLine"
+                    android:maxLines="3"
+                    android:gravity="top|start"
+                    android:hint="dán JWT (không kèm chữ Bearer)" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_faint"
+                    android:text="Gửi kèm header Authorization: Bearer … cho mọi request. Để trống nếu service đang bật permit-all." />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

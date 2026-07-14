@@ -42,8 +42,30 @@ object Backend {
     private const val PREFS = "noti_test"
     private const val KEY_BASE_URL = "base_url"
     private const val KEY_USER_ID = "user_id"
+    private const val KEY_BEARER = "bearer"
 
     private val JSON = "application/json".toMediaType()
+
+    /**
+     * Bearer token gửi kèm mọi request tới notification service. KHÔNG hardcode trong source —
+     * user nhập ở màn Kết nối và được lưu vào SharedPreferences, nên MyFirebaseMessagingService
+     * (chạy không có UI khi FCM refresh token) vẫn dùng lại được.
+     *
+     * Header phải là "Authorization" — Spring bỏ qua header tên "Authentication".
+     */
+    @Volatile
+    private var bearerToken: String = ""
+
+    /** Nạp token từ prefs vào bộ nhớ. Gọi ở MainActivity.onCreate và trong FCM service. */
+    fun loadBearer(context: Context) {
+        bearerToken = bearer(context)
+    }
+
+    fun bearer(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_BEARER, "") ?: ""
+
+    private fun Request.Builder.auth(): Request.Builder =
+        if (bearerToken.isNotEmpty()) header("Authorization", "Bearer $bearerToken") else this
 
     private val http = OkHttpClient()
 
@@ -52,10 +74,12 @@ object Backend {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
-    fun saveConfig(context: Context, baseUrl: String, userId: String) {
+    fun saveConfig(context: Context, baseUrl: String, userId: String, bearer: String = "") {
+        bearerToken = bearer
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(KEY_BASE_URL, baseUrl)
             .putString(KEY_USER_ID, userId)
+            .putString(KEY_BEARER, bearer)
             .apply()
     }
 
@@ -81,6 +105,7 @@ object Backend {
 
         val req = Request.Builder()
             .url("$baseUrl/api/v1/devices")
+            .auth()
             .post(body.toString().toRequestBody(JSON))
             .build()
 
@@ -105,7 +130,7 @@ object Backend {
             addQueryParameter("limit", "20")
         } ?: return onResult(false, emptyList(), 0, "URL không hợp lệ")
 
-        call(Request.Builder().url(url).get().build()) { code, text, err ->
+        call(Request.Builder().url(url).auth().get().build()) { code, text, err ->
             if (err != null) return@call onResult(false, emptyList(), 0, err)
             if (code !in 200..299) return@call onResult(false, emptyList(), 0, "HTTP $code: $text")
 
@@ -135,7 +160,7 @@ object Backend {
         } ?: return onResult(false, "URL không hợp lệ")
 
         val empty = "".toRequestBody(null)
-        call(Request.Builder().url(url).post(empty).build()) { code, text, err ->
+        call(Request.Builder().url(url).auth().post(empty).build()) { code, text, err ->
             when {
                 err != null -> onResult(false, err)
                 code == 204 || code in 200..299 -> onResult(true, "HTTP $code")
@@ -159,7 +184,7 @@ object Backend {
             addQueryParameter("userId", userId)
         } ?: return null
 
-        val req = Request.Builder().url(url).header("Accept", "text/event-stream").get().build()
+        val req = Request.Builder().url(url).auth().header("Accept", "text/event-stream").get().build()
         return EventSources.createFactory(sseHttp).newEventSource(req, object : EventSourceListener() {
             override fun onOpen(eventSource: EventSource, response: Response) = onOpen()
 

@@ -80,20 +80,24 @@ class MainActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------------ config
     private fun restoreConfig() {
+        Backend.loadBearer(this)
         Backend.baseUrl(this).takeIf { it.isNotEmpty() }?.let { binding.backendUrl.setText(it) }
         Backend.userId(this).takeIf { it.isNotEmpty() }?.let { binding.userIdInput.setText(it) }
+        Backend.bearer(this).takeIf { it.isNotEmpty() }?.let { binding.bearerInput.setText(it) }
     }
 
     private fun userId(): String = binding.userIdInput.text.toString().trim()
 
-    /** Backend URL đã chuẩn hoá; đồng thời lưu lại để service dùng khi FCM refresh token. */
+    private fun bearer(): String = binding.bearerInput.text.toString().trim()
+
+    /** Backend URL đã chuẩn hoá; đồng thời lưu config (kèm bearer) để service dùng khi FCM refresh token. */
     private fun baseUrl(): String? {
         val base = Backend.normalizeBaseUrl(binding.backendUrl.text.toString())
         if (base.isEmpty()) {
             log("Hãy nhập Backend URL")
             return null
         }
-        Backend.saveConfig(this, base, userId())
+        Backend.saveConfig(this, base, userId(), bearer())
         return base
     }
 

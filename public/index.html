@@ -40,21 +40,23 @@
       padding: 1.1rem 0.8rem; position: sticky; top: 0; height: 100vh;
       display: flex; flex-direction: column; gap: 1.2rem;
     }
-    .brand { display: flex; align-items: center; gap: 0.55rem; padding: 0.2rem 0.5rem; }
-    .brand .logo { font-size: 1.3rem; }
-    .brand .t { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand { display: flex; align-items: center; gap: 0.6rem; padding: 0.2rem 0.5rem; }
+    .brand .logo { color: var(--accent); display: flex; }
+    .brand .logo svg { width: 22px; height: 22px; }
+    .brand .t { display: flex; flex-direction: column; line-height: 1.15; }
     .brand .t b { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
-    .brand .t small { font-size: 0.68rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+    .brand .t small { font-size: 0.64rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; }
 
-    .nav { display: flex; flex-direction: column; gap: 0.2rem; }
-    .nav-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); padding: 0 0.6rem; margin-bottom: 0.3rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.15rem; }
+    .nav-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); padding: 0 0.7rem; margin-bottom: 0.35rem; }
     .tab {
-      display: flex; align-items: center; gap: 0.65rem; width: 100%; text-align: left;
+      display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
       background: none; border: none; border-radius: 8px; color: var(--text-muted);
-      padding: 0.6rem 0.7rem; font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+      padding: 0.6rem 0.7rem; font-family: var(--sans); font-size: 0.88rem; font-weight: 600;
       cursor: pointer; transition: background 0.12s, color 0.12s;
     }
-    .tab .ic { font-size: 1.05rem; width: 1.3rem; text-align: center; }
+    .tab .ic { display: flex; align-items: center; justify-content: center; flex: 0 0 20px; }
+    .tab .ic svg { width: 18px; height: 18px; }
     .tab:hover { background: var(--bg-panel); color: var(--text-primary); }
     .tab.active { background: var(--accent-soft); color: var(--accent); }
 
@@ -77,7 +79,7 @@
     .userfield label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
     .userfield input { width: 190px; padding: 0.4rem 0.6rem; font-family: var(--mono); font-size: 0.82rem; }
 
-    .views { padding: 1.5rem; width: 100%; max-width: 860px; flex: 1; }
+    .views { padding: 1.75rem 1.5rem 2.5rem; width: 100%; max-width: 880px; margin: 0 auto; flex: 1; }
 
     /* ---------------- Realtime toggle ---------------- */
     .rt-btn {
@@ -96,11 +98,12 @@
     /* ---------------- Bell ---------------- */
     .bell { position: relative; }
     .bell-btn {
-      background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-primary);
-      width: 40px; height: 40px; border-radius: 50%; font-size: 1.05rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
+      background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-muted);
+      width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s;
     }
-    .bell-btn:hover { border-color: var(--accent); }
+    .bell-btn svg { width: 18px; height: 18px; }
+    .bell-btn:hover { border-color: var(--accent); color: var(--accent); }
     .bell-badge {
       position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px;
       background: var(--danger); color: #fff; border-radius: 9px; font-size: 0.68rem; font-weight: 700;
@@ -149,16 +152,20 @@
     textarea { font-family: var(--mono); font-size: 0.82rem; resize: vertical; }
     input::placeholder, textarea::placeholder { color: var(--text-faint); }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+
+    /* Grid 2 cột: cần margin-top vì label con bị reset bởi :first-of-type */
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 1rem; }
 
     .checks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .checks label {
-      margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; text-transform: none;
-      letter-spacing: 0; font-weight: 500; font-size: 0.85rem; color: var(--text-primary);
+      margin: 0; display: inline-flex; align-items: center; gap: 0.5rem; text-transform: none;
+      letter-spacing: 0; font-weight: 500; font-size: 0.85rem; color: var(--text-muted);
       background: var(--bg-canvas); border: 1px solid var(--border); border-radius: 7px;
-      padding: 0.4rem 0.65rem; cursor: pointer;
+      padding: 0.45rem 0.7rem; cursor: pointer; transition: border-color 0.12s, color 0.12s;
     }
-    .checks input { width: auto; }
+    .checks label:hover { border-color: var(--accent); }
+    .checks label:has(input:checked) { border-color: var(--accent); color: var(--text-primary); background: var(--accent-soft); }
+    .checks input { width: auto; margin: 0; accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
 
     button.btn {
       margin-top: 1rem; padding: 0.6rem 1.1rem; border: 1px solid transparent; border-radius: 7px;
@@ -168,7 +175,7 @@
     button.btn:active { transform: translateY(1px); }
     .btn-primary { background: var(--accent); color: #06101f; }
     .btn-primary:hover { filter: brightness(1.08); }
-    .btn-secondary { background: transparent; border-color: var(--border); color: var(--text-primary); }
+    .btn-secondary { background: var(--bg-canvas); border-color: #2e3956; color: var(--text-primary); }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
     .btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
     .btn-sm { margin-top: 0; padding: 0.35rem 0.7rem; font-size: 0.78rem; }
@@ -216,20 +223,22 @@
 
     /* ---------------- Log drawer ---------------- */
     .logdrawer {
-      border-top: 1px solid var(--border-soft); background: var(--bg-side);
-      position: sticky; bottom: 0;
+      border-top: 1px solid var(--border); background: var(--bg-side);
+      position: sticky; bottom: 0; z-index: 5;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
     }
     .logdrawer > summary {
-      list-style: none; cursor: pointer; padding: 0.5rem 1.5rem; font-size: 0.76rem;
-      font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+      list-style: none; cursor: pointer; padding: 0.6rem 1.5rem; font-size: 0.72rem;
+      font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
       display: flex; align-items: center; gap: 0.5rem; user-select: none;
     }
+    .logdrawer > summary:hover { color: var(--text-primary); }
     .logdrawer > summary::-webkit-details-marker { display: none; }
-    .logdrawer > summary::before { content: "▸"; font-size: 0.7rem; transition: transform 0.15s; }
+    .logdrawer > summary::before { content: "▸"; font-size: 0.65rem; transition: transform 0.15s; }
     .logdrawer[open] > summary::before { transform: rotate(90deg); }
     #log {
       background: #070a12; color: var(--accent-2); font-family: var(--mono); font-size: 0.78rem;
-      padding: 0.85rem 1.5rem; height: 160px; overflow: auto; white-space: pre-wrap;
+      padding: 0.85rem 1.5rem; height: 150px; overflow: auto; white-space: pre-wrap;
       border-top: 1px solid var(--border-soft);
     }
     #log:empty::before { content: "// log sẽ hiện ở đây"; color: var(--text-faint); }
@@ -262,17 +271,43 @@
     <!-- ============ Sidebar ============ -->
     <aside class="sidebar">
       <div class="brand">
-        <span class="logo">🔔</span>
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" />
+          </svg>
+        </span>
         <span class="t"><b>Notification</b><small>Console</small></span>
       </div>
       <nav class="nav">
         <div class="nav-label">Kênh</div>
-        <button class="tab active" data-tab="device"><span class="ic">📱</span> <span>Thiết bị</span></button>
-        <button class="tab" data-tab="send"><span class="ic">📤</span> <span>Gửi thông báo</span></button>
-        <button class="tab" data-tab="template"><span class="ic">📄</span> <span>Template</span></button>
+        <button class="tab active" data-tab="device">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2.5" /><path d="M11 18h2" />
+            </svg>
+          </span>
+          <span>Thiết bị</span>
+        </button>
+        <button class="tab" data-tab="send">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7z" />
+            </svg>
+          </span>
+          <span>Gửi thông báo</span>
+        </button>
+        <button class="tab" data-tab="template">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" /><path d="M14 2v5h5" />
+              <path d="M9 13h6" /><path d="M9 17h4" />
+            </svg>
+          </span>
+          <span>Template</span>
+        </button>
       </nav>
       <div class="side-foot">
-        Service: <code id="svcUrl">/api/v1</code><br />Máy khách gửi qua proxy noti-web.
+        Service <code id="svcUrl">/api/v1</code><br />Web gọi qua proxy noti-web.
       </div>
     </aside>
 
@@ -290,7 +325,12 @@
           <span class="rt-dot off" id="rtDot"></span> Realtime
         </button>
         <div class="bell">
-          <button class="bell-btn" id="bellBtn" title="Hộp thư (INAPP)">🔔<span class="bell-badge" id="bellBadge">0</span></button>
+          <button class="bell-btn" id="bellBtn" title="Hộp thư (INAPP)" aria-label="Hộp thư">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" />
+            </svg>
+            <span class="bell-badge" id="bellBadge">0</span>
+          </button>
           <div class="bell-panel" id="bellPanel">
             <div class="bell-panel-head">
               <h3>Hộp thư INAPP</h3>
@@ -310,10 +350,10 @@
               Bật nhận thông báo để lấy <b>FCM token</b> của trình duyệt này; token sẽ <b>tự đăng ký</b>
               cho <b>User ID</b> (góc trên) với notification service.
             </p>
-            <button class="btn btn-primary" id="enableBtn">Bật nhận thông báo</button>
             <label>FCM Token</label>
             <div id="token">chưa có token</div>
             <div class="btn-row">
+              <button class="btn btn-primary" id="enableBtn">Bật nhận thông báo</button>
               <button class="btn btn-secondary" id="copyBtn">Copy token</button>
               <button class="btn btn-secondary" id="registerBtn">Đăng ký lại</button>
             </div>
