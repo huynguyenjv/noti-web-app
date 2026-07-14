@@ -7,3 +7,4 @@ serviceAccount*.json
 # Firebase service account keys (never commit private keys)
 *-firebase-adminsdk-*.json
 *serviceaccount*.json
+firebase-credentials.json

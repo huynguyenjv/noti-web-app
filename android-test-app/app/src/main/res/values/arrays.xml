@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="locales">
+        <item>vi</item>
+        <item>en</item>
+        <item>vi_VN</item>
+        <item>en_US</item>
+    </string-array>
+
+    <string-array name="priorities">
+        <item>HIGH</item>
+        <item>BULK</item>
+    </string-array>
+</resources>

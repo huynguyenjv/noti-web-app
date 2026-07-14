@@ -1,10 +1,15 @@
 # Noti Test — App Android test push FCM
 
-App tối giản để test backend `noti-web` đẩy push notification xuống thiết bị Android thật.
+App test backend `noti-web` trên thiết bị Android thật. Cùng bộ luồng như web UI (`public/app.js`), chỉ khác `platform: ANDROID`.
 
-- Hiện **device token FCM** (copy được).
-- Nút **Gửi test** → gọi `POST {Backend URL}/api/send` với token của chính máy → backend gửi FCM về lại → noti hiện.
-- Nhận noti cả khi app đang mở (foreground) lẫn khi app đóng (background).
+Một **User ID** dùng chung cho cả 4 luồng:
+
+- **Thiết bị** — hiện device token FCM (copy được); **Đăng ký device** → `POST /api/register-device` (`userId` + token + `platform: ANDROID`) để PUSH tới userId đó về được máy này. Khi FCM refresh token, app **tự đăng ký lại** bằng config đã lưu (không cần mở app).
+- **Gửi** — `POST /api/notify` qua notification service: `recipientId`, chọn channels (PUSH / INAPP / EMAIL / SMS / ZALO_ZNS), `type`, `templateCode`, `locale`, `priority`, `eventRef`, `data` (JSON). Kèm nút **self-test** bắn FCM thẳng tới máy này qua `POST /api/send` (bỏ qua notification service).
+- **Hộp thư (INAPP)** — `GET /api/inbox?userId=` + badge số chưa đọc; chạm 1 tin → `POST /api/inbox/{id}/read`.
+- **Realtime (SSE)** — bật/tắt `GET /api/stream?userId=`; mở stream = user "online" nên OUTAPP nudge đến qua realtime thay vì push. Tự nối lại mỗi 45s để giữ presence (TTL ~60s phía service).
+
+Nhận noti cả khi app đang mở (foreground) lẫn khi app đóng (background).
 
 Package: `com.example.notitest`
 
@@ -48,13 +53,8 @@ java -version   # phải hiện 17.x
    sdkmanager --licenses
    ```
 
-### 2.3. Gradle 8.7
-Tải Gradle 8.7 (binary): https://gradle.org/releases/
-Giải nén, thêm `...\gradle-8.7\bin` vào `Path`:
-```powershell
-$env:Path += ";C:\Gradle\gradle-8.7\bin"
-gradle -v   # kiểm tra
-```
+### 2.3. Gradle
+Không cần cài — repo đã có gradle wrapper (`gradlew.bat`), nó tự tải Gradle 8.7 ở lần chạy đầu.
 
 ---
 
@@ -63,10 +63,7 @@ gradle -v   # kiểm tra
 Từ thư mục `android-test-app`:
 
 ```powershell
-# lần đầu: tạo gradle wrapper để build ổn định về sau
-gradle wrapper --gradle-version 8.7
-
-# build APK debug
+$env:ANDROID_HOME = "C:\Android"   # nếu SDK ở chỗ khác thì đổi đường dẫn
 .\gradlew.bat assembleDebug
 ```
 

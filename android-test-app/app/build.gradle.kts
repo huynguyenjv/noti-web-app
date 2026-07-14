@@ -43,6 +43,8 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
-    // Networking for the "send test" button -> noti-web /api/send
+    // Networking: noti-web /api/register-device, /api/notify, /api/inbox, /api/send
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // SSE client cho /api/stream (realtime presence + OUTAPP nudge)
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
 }

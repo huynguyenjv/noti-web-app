@@ -2,6 +2,7 @@ package com.example.notitest
 
 import android.app.NotificationManager
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -13,8 +14,18 @@ import com.google.firebase.messaging.RemoteMessage
  */
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
+    /**
+     * FCM refresh token → token cũ đã đăng ký với notification service thành vô hiệu.
+     * Đăng ký lại ngay bằng config đã lưu (nếu user từng bấm "Đăng ký"), vì lúc này không có UI.
+     */
     override fun onNewToken(token: String) {
-        // Token có thể refresh. App đọc lại token mỗi lần mở nên không cần lưu ở đây.
+        val base = Backend.baseUrl(this)
+        val userId = Backend.userId(this)
+        if (base.isEmpty() || userId.isEmpty()) return
+
+        Backend.registerDevice(base, userId, token) { ok, detail ->
+            Log.i(TAG, if (ok) "re-registered refreshed token: $detail" else "re-register failed: $detail")
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -35,5 +46,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    private companion object {
+        const val TAG = "NotiTest"
     }
 }

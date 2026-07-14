@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1565C0</color>
+    <color name="ic_launcher_background">#0E1116</color>
+
+    <!-- Instrument panel: nền đá phiến, hai accent có nghĩa (hổ phách = tín hiệu, ngọc = đang sống) -->
+    <color name="canvas">#0E1116</color>
+    <color name="surface">#171B22</color>
+    <color name="surface_raised">#1E242D</color>
+    <color name="tape">#090B0F</color>
+    <color name="border">#2A313C</color>
+
+    <color name="text_primary">#E6EAF0</color>
+    <color name="text_muted">#8A94A6</color>
+    <color name="text_faint">#5A6373</color>
+
+    <color name="signal">#F5A524</color>
+    <color name="signal_dim">#3A2E17</color>
+    <color name="live">#2DD4BF</color>
+    <color name="live_dim">#12332F</color>
+    <color name="danger">#FF6B6B</color>
 </resources>
