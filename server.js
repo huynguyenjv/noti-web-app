@@ -14,6 +14,16 @@ const PORT = process.env.PORT || 3000;
 // Base URL of vtrip.core.notification. The frontend can't call it directly (CORS + it needs no
 // browser secrets), so this server proxies device registration to it.
 const NOTIFICATION_BASE_URL = process.env.NOTIFICATION_BASE_URL || 'http://localhost:8083';
+// Bearer token for the notification service. Spring reads the "Authorization" header only — an
+// "Authentication" header is silently ignored. Omitted entirely when unset so local runs with
+// permit-all still work.
+const NOTIFICATION_API_KEY = process.env.NOTIFICATION_API_KEY || '';
+
+function svcHeaders(extra = {}) {
+  const headers = { ...extra };
+  if (NOTIFICATION_API_KEY) headers.Authorization = `Bearer ${NOTIFICATION_API_KEY}`;
+  return headers;
+}
 
 function fcmConfig() {
   return {
@@ -86,7 +96,7 @@ app.post('/api/register-device', async (req, res) => {
   try {
     const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/devices`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'Authentication': `Bearer eyJhbGciOiJSUzI1NiJ9.eyJ2aWQiOiIzNDRkNjA2Mi00MzFjLTQ3MWEtYjM3Yi01Yzc3N2NmZWQxNjEiLCJzdWIiOiI4Yjk1OTg2ZC1kY2NkLTQ0ZGQtOGJlOS05OTQwYmFjZmQzZDgiLCJhY3RvclR5cGUiOjIsInZjbWlkIjoiIiwiaXNzIjoiZ3QtYXBwIiwiZXhwIjoxNzk2NTUxODA1LCJ2bXQiOiIiLCJpYXQiOjE3NjQ5OTQyMDUsInByb3YiOiJTWVNURU1fUFJPVklERVIifQ.f1KAy5dowZ5_3QcaMKqwxigJp-sbygbQGvZS5MNNcMc7pYpTT1a4-igUJRnYTUlrgD1RuNDMQ0Z1osJlu1rHcnksOFjrTYCW3cQuT5eqYPnbPiuhKAS8ylKJGLdKkxkdxtC3Psb4Mp2e9bO5MoWtHWvAiv3fwm04xF6ImWvp9W_2is7Mfex28X6eocK0M0Bp1_oG0Bw6Y1_rxPa87M-xtqnViA3wGOLyTP4W5c9tG-q0WYXh-FmfzB1kcz5qdNuNUR2EIOcAiyZMyL5unRx0qp-FWQfBRr4t7hVpy5MG5RsTEZP2K-WMtpeI348RgpMA6fbOYn1xbziI9wwx-HVfnA` },
+      headers: svcHeaders({ 'content-type': 'application/json' }),
       body: JSON.stringify(body),
     });
     if (r.status === 201) return res.json({ ok: true });
@@ -111,7 +121,7 @@ app.post('/api/notify', async (req, res) => {
   try {
     const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/notification`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: svcHeaders({ 'content-type': 'application/json' }),
       body: JSON.stringify(body),
     });
     const text = await r.text();
@@ -136,7 +146,7 @@ app.get('/api/inbox', async (req, res) => {
     const url = `${NOTIFICATION_BASE_URL}/api/v1/inbox?userId=${encodeURIComponent(
       userId
     )}&unreadOnly=false&limit=20`;
-    const r = await fetch(url);
+    const r = await fetch(url, { headers: svcHeaders() });
     const text = await r.text();
     if (!r.ok) {
       return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
@@ -168,7 +178,7 @@ app.post('/api/templates', async (req, res) => {
   try {
     const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: svcHeaders({ 'content-type': 'application/json' }),
       body: JSON.stringify(body),
     });
     const text = await r.text();
@@ -191,7 +201,7 @@ app.post('/api/templates', async (req, res) => {
 // List all templates.
 app.get('/api/templates', async (req, res) => {
   try {
-    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates`);
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates`, { headers: svcHeaders() });
     const text = await r.text();
     if (!r.ok) return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
     let parsed = null;
@@ -210,7 +220,7 @@ app.get('/api/templates', async (req, res) => {
 // Fetch a template by id.
 app.get('/api/templates/:id', async (req, res) => {
   try {
-    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates/${encodeURIComponent(req.params.id)}`);
+    const r = await fetch(`${NOTIFICATION_BASE_URL}/api/v1/templates/${encodeURIComponent(req.params.id)}`, { headers: svcHeaders() });
     const text = await r.text();
     if (!r.ok) return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
     let parsed = null;
@@ -234,7 +244,7 @@ app.post('/api/templates/:id/:action', async (req, res) => {
   try {
     const r = await fetch(
       `${NOTIFICATION_BASE_URL}/api/v1/templates/${encodeURIComponent(id)}/${action}`,
-      { method: 'POST' }
+      { method: 'POST', headers: svcHeaders() }
     );
     const text = await r.text();
     if (r.ok) return res.json({ ok: true });
@@ -262,7 +272,7 @@ app.get('/api/stream', async (req, res) => {
   try {
     const upstream = await fetch(
       `${NOTIFICATION_BASE_URL}/api/v1/stream?userId=${encodeURIComponent(userId)}`,
-      { headers: { Accept: 'text/event-stream' }, signal: controller.signal }
+      { headers: svcHeaders({ Accept: 'text/event-stream' }), signal: controller.signal }
     );
     if (!upstream.ok || !upstream.body) {
       res.write(`event: error\ndata: upstream ${upstream.status}\n\n`);
@@ -296,7 +306,7 @@ app.post('/api/inbox/:id/read', async (req, res) => {
     const url = `${NOTIFICATION_BASE_URL}/api/v1/inbox/${encodeURIComponent(
       req.params.id
     )}/read?userId=${encodeURIComponent(userId)}&kind=INBOX`;
-    const r = await fetch(url, { method: 'POST' });
+    const r = await fetch(url, { method: 'POST', headers: svcHeaders() });
     if (r.status === 204 || r.ok) return res.json({ ok: true });
     const text = await r.text();
     return res.status(502).json({ ok: false, error: `notification service ${r.status}: ${text}` });
